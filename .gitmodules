@@ -1,0 +1,6 @@
+[submodule "repos/gl3w"]
+	path = repos/gl3w
+	url = https://github.com/skaslev/gl3w
+[submodule "repos/cimgui"]
+	path = repos/cimgui
+	url = https://github.com/kylemiller3/cimgui.git

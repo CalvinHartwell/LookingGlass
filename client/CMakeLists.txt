@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0)
-project(looking-glass-client C)
+project(looking-glass-client C CXX)
 
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/")
 
@@ -15,7 +15,7 @@ if(OPTIMIZE_FOR_NATIVE)
   endif()
 endif()
 
-option(ENABLE_OPENGL "Enable the OpenGL renderer"       ON)
+option(ENABLE_OPENGL "Enable the OpenGL renderer"       OFF)
 add_feature_info(ENABLE_OPENGL ENABLE_OPENGL "Legacy OpenGL renderer.")
 
 option(ENABLE_EGL    "Enable the EGL renderer"          ON)
@@ -24,7 +24,7 @@ add_feature_info(ENABLE_EGL ENABLE_EGL "EGL renderer.")
 option(ENABLE_CB_X11 "Enable X11 clipboard integration" ON)
 add_feature_info(ENABLE_CB_X11 ENABLE_CB_X11 "X11 Clipboard Integration.")
 
-option(ENABLE_BACKTRACE "Enable backtrace support on crash" ON)
+option(ENABLE_BACKTRACE "Enable backtrace support on crash" OFF)
 add_feature_info(ENABLE_BACKTRACE ENABLE_BACKTRACE "Backtrace support.")
 
 add_compile_options(

@@ -43,10 +43,16 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 #include "kb.h"
 #include "ll.h"
 
+// we need this to process keyboard events
+#define CIMGUI_DEFINE_ENUMS_AND_STRUCTS
+#include "cimgui.h"
+bool ImGui_ImplSDL2_ProcessEvent(const SDL_Event* event);
+
 // forwards
-static int cursorThread(void * unused);
-static int renderThread(void * unused);
-static int frameThread (void * unused);
+static int pipeThread   (void * unused);
+static int cursorThread (void * unused);
+static int renderThread (void * unused);
+static int frameThread  (void * unused);
 
 struct AppState  state;
 
@@ -92,6 +98,39 @@ static void updatePositionInfo()
   state.lgrResize = true;
 }
 
+static int pipeThread(void * unused)
+{
+  const char * pipe = "/tmp/hax0r-data";
+  const int options = O_RDONLY | O_SYNC;
+  mkfifo(pipe, 0666);
+
+  int fd = open(pipe, options);
+  if (fd == -1)
+  {
+    DEBUG_ERROR("Could not open pipe to read");
+    return 1;
+  }
+
+  void * buffer = malloc(500000);
+  while (state.running)
+  {
+    size_t r = read(fd, buffer, sizeof(buffer));
+    if (r == 0)
+    {
+      // pipe closed
+      close(fd);
+      fd = open(pipe, options);
+    }
+    else
+    {
+      state.lgr->update_overlay(state.lgrData, buffer, r);
+    }
+  }
+  free(buffer);
+  close(fd);
+  return 0;
+}
+
 static int renderThread(void * unused)
 {
   if (!state.lgr->render_startup(state.lgrData, state.window))
@@ -105,6 +144,13 @@ static int renderThread(void * unused)
   if (!(t_cursor = SDL_CreateThread(cursorThread, "cursorThread", NULL)))
   {
     DEBUG_ERROR("cursor create thread failed");
+    return 1;
+  }
+
+  SDL_Thread *t_pipe = NULL;
+  if (!(t_pipe = SDL_CreateThread(pipeThread, "pipeThread", NULL)))
+  {
+    DEBUG_ERROR("Failed to create pipe thread");
     return 1;
   }
 
@@ -831,7 +877,8 @@ int eventFilter(void * userdata, SDL_Event * event)
       }
       break;
   }
-
+  ImGui_ImplSDL2_ProcessEvent(event);
+  
   // consume all events
   return 0;
 }

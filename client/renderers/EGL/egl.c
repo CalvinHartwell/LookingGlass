@@ -39,6 +39,13 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 #include "fps.h"
 #include "splash.h"
 #include "alert.h"
+#include "overlay.h"
+
+#define CIMGUI_DEFINE_ENUMS_AND_STRUCTS
+#include "cimgui.h"
+
+// forward declare
+int gl3wInit(void);
 
 #define SPLASH_FADE_TIME 1000000
 #define ALERT_TIMEOUT    2000000
@@ -65,6 +72,7 @@ struct Inst
   EGL_FPS         * fps;     // the fps display
   EGL_Splash      * splash;  // the splash screen
   EGL_Alert       * alert;   // the alert display
+  EGL_Overlay     * imgui;
 
   LG_RendererFormat    format;
   bool                 sourceChanged;
@@ -219,6 +227,7 @@ void egl_deinitialize(void * opaque)
   egl_fps_free    (&this->fps   );
   egl_splash_free (&this->splash);
   egl_alert_free  (&this->alert );
+  egl_overlay_free(&this->imgui );
 
   free(this);
 }
@@ -360,6 +369,13 @@ bool egl_render_startup(void * opaque, SDL_Window * window)
 {
   struct Inst * this = (struct Inst *)opaque;
 
+  // prepare imgui
+  ImGuiContext * context = igCreateContext(NULL);
+  igSetCurrentContext(context);
+  ImGuiIO * io = igGetIO();
+  io->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+  io->BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset;
+
   SDL_SysWMinfo wminfo;
   SDL_VERSION(&wminfo.version);
   if (!SDL_GetWindowWMInfo(window, &wminfo))
@@ -480,6 +496,18 @@ bool egl_render_startup(void * opaque, SDL_Window * window)
     return false;
   }
 
+  if (gl3wInit()) 
+  {
+    DEBUG_ERROR("Failed to initialize gl3w.\n");
+    return false;
+  }
+
+  if (!egl_overlay_init(&this->imgui, window))
+  {
+    DEBUG_ERROR("Failed to initialize the overlay display");
+    return false;
+  }
+
   return true;
 }
 
@@ -533,6 +561,7 @@ bool egl_render(void * opaque, SDL_Window * window)
   }
 
   egl_fps_render(this->fps, this->screenScaleX, this->screenScaleY);
+  egl_overlay_render(this->imgui, window, this->screenScaleY);
   eglSwapBuffers(this->display, this->surface);
 
   // defer texture uploads until after the flip to avoid stalling
@@ -551,6 +580,13 @@ void egl_update_fps(void * opaque, const float avgUPS, const float avgFPS)
   egl_fps_update(this->fps, avgUPS, avgFPS);
 }
 
+bool egl_update_overlay(void * opaque, void * data, size_t size)
+{
+  struct Inst * this = (struct Inst *)opaque;
+  egl_overlay_update(this->imgui, data, size);  
+  return true;
+}
+
 struct LG_Renderer LGR_EGL =
 {
   .get_name       = egl_get_name,
@@ -565,5 +601,6 @@ struct LG_Renderer LGR_EGL =
   .on_alert       = egl_on_alert,
   .render_startup = egl_render_startup,
   .render         = egl_render,
-  .update_fps     = egl_update_fps
+  .update_fps     = egl_update_fps,
+  .update_overlay = egl_update_overlay
 };
