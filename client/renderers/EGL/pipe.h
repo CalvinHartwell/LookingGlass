@@ -6,6 +6,13 @@
 
 typedef struct LG_Pipe LG_Pipe;
 
+/// Used for nulling an index
+typedef struct LG_Null
+{
+    char type;
+    unsigned short idx;
+} LG_Null;
+
 typedef struct LG_Line
 {
   char type;
@@ -14,7 +21,7 @@ typedef struct LG_Line
   float y1;
   float x2;
   float y2;
-  int color;
+  unsigned int color;
   float width;
 } LG_Line;
 
@@ -26,9 +33,9 @@ typedef struct LG_Box
   float y1;
   float x2;
   float y2;
-  int outlineColor;
-  int innerColor;
-  float outlineThickness;
+  unsigned int color;
+  float thickness;
+  bool filled;  // If filled is true, thickness doesn't do anything
 } LG_Box;
 
 typedef struct LG_Text
@@ -38,7 +45,7 @@ typedef struct LG_Text
   float x;
   float y;
   char size;
-  int color;
+  unsigned int color;
   char str[128];
 } LG_Text;
 

@@ -114,7 +114,8 @@ static int pipeThread(void * unused)
   void * buffer = malloc(500000);
   while (state.running)
   {
-    size_t r = read(fd, buffer, sizeof(buffer));
+    size_t r = read(fd, buffer, 500000);
+    DEBUG_INFO("Read %zu bytes", r);
     if (r == 0)
     {
       // pipe closed
