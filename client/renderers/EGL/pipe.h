@@ -13,6 +13,7 @@ typedef struct LG_Null
     unsigned short idx;
 } LG_Null;
 
+
 typedef struct LG_Line
 {
   char type;
@@ -46,6 +47,7 @@ typedef struct LG_Text
   float y;
   char size;
   unsigned int color;
+  unsigned int style;
   char str[128];
 } LG_Text;
 

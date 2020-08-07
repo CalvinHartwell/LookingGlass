@@ -5,6 +5,8 @@
 #include "csgo.h"
 #include "vect.h"
 
+#include "./imgui_hook/imgui_hook.h"
+
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
@@ -78,11 +80,12 @@ bool egl_overlay_init(EGL_Overlay **imgui, SDL_Window *w) {
         return false;
     }
 
-    SDL_GLContext context = SDL_GL_CreateContext(w);
-    igCreateContext(NULL);
-    ImGui_ImplSDL2_InitForOpenGL(w, &context);
+    init_imgui(w);
+//    SDL_GLContext context = SDL_GL_CreateContext(w);
+//    igCreateContext(NULL);
+//    ImGui_ImplSDL2_InitForOpenGL(w, &context);
     ImGui_ImplOpenGL3_Init("#version 300 es");
-    igStyleColorsDark(NULL);
+//    igStyleColorsDark(NULL);
 
     return true;
 }
@@ -131,11 +134,22 @@ void egl_overlay_update(EGL_Overlay *imgui, void *data, size_t size) {
 }
 
 void egl_overlay_render(EGL_Overlay *imgui, SDL_Window *window, float scaleY) {
+    ImGui_ImplOpenGL3_NewFrame();
+    ImDrawData *data = render_callback(window);
+    ImGui_ImplOpenGL3_RenderDrawData(data);
+    SDL_GL_SwapWindow(window);
+    return;
     static bool showMenu = false;
 
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplSDL2_NewFrame(window);
     igNewFrame();
+
+    igRender();
+    igEndFrame();
+
+    ImGui_ImplOpenGL3_RenderDrawData(igGetDrawData());
+    SDL_GL_SwapWindow(window);
 
     if (igIsKeyPressed(SDL_SCANCODE_NUMLOCKCLEAR, false))
         showMenu = !showMenu;
@@ -175,7 +189,7 @@ void egl_overlay_render(EGL_Overlay *imgui, SDL_Window *window, float scaleY) {
                     LG_Box *boxPtr = (LG_Box *) &imgui->primitives[p];
                     ImVec2 p1 = {boxPtr->x1, boxPtr->y1};
                     ImVec2 p2 = {boxPtr->x2, boxPtr->y2};
-                    if(boxPtr->filled) {
+                    if (boxPtr->filled) {
                         ImDrawList_AddRectFilled(dl, p1, p2, boxPtr->color, 0.0f, ImDrawCornerFlags_None);
                     } else {
                         ImDrawList_AddRect(dl, p1, p2, boxPtr->color, 0.0f, ImDrawCornerFlags_None, boxPtr->thickness);
