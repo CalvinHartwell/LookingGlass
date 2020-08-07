@@ -1,0 +1,8 @@
+language = "C"
+header = "#define CIMGUI_DEFINE_ENUMS_AND_STRUCTS"
+includes = [
+    "cimgui.h"
+]
+
+[export]
+include = ["init_imgui", "render_callback"]
