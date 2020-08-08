@@ -10,6 +10,9 @@ use std::sync::Mutex;
 use bindings::*;
 use simplelog::{TermLogger, Config, TerminalMode};
 use log::*;
+use commands::Command;
+use crossbeam::{Sender, Receiver, bounded};
+use crate::commands::Frame;
 
 // include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 const PIPE_LOCATION: &str = "/tmp/overlay-pipe";
@@ -32,6 +35,7 @@ pub extern "C" fn init_imgui(window: *mut SDL_Window) {
 
 lazy_static::lazy_static! {
     pub static ref CURRENT_FRAME: Mutex<commands::Frame> = Mutex::new(commands::Frame::new());
+    pub static ref COMMAND_CHAN: (Sender<Command>, Receiver<Command>) = bounded(10);
 }
 
 #[no_mangle]
@@ -54,19 +58,20 @@ pub extern "C" fn render_callback(window: *mut SDL_Window) -> *mut ImDrawData {
                         | ImGuiWindowFlags__ImGuiWindowFlags_NoBackground) as _) {
             let draw_list = igGetWindowDrawList();
 
-            // Draw the current frame updated by the pipe
-            // Maybe use channels instead and keep a local frame?
-            CURRENT_FRAME.lock().unwrap().draw(draw_list);
+            // Get a command from the pipe channel if there is one in the buffer
+            if let Ok(command) = COMMAND_CHAN.1.try_recv() {
+                match command {
+                    Command::UpdateFrame(frame) => {
+                        (*CURRENT_FRAME.lock().unwrap()) = frame;
+                    },
+                    Command::ClearScreen => {
+                        (*CURRENT_FRAME.lock().unwrap()) = Frame::new();
+                    }
+                }
+            }
 
-            // ImDrawList_AddRect(
-            //     draw_list,
-            //     ImVec2{x: 10.0, y: 10.0},
-            //     ImVec2{x: 500.0, y: 500.0},
-            //     0xFFFFFFFF,
-            //     0.0,
-            //     0,
-            //     5.0
-            // );
+            // Draw the frame
+            CURRENT_FRAME.lock().unwrap().draw(draw_list);
 
             igEnd();
         }

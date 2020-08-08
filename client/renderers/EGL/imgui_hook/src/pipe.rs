@@ -56,6 +56,7 @@ pub fn pipe_thread() {
         };
 
         debug!("Received command: {:?}", command);
-        unsafe { command.handle() };
+        crate::COMMAND_CHAN.0.send(command).expect("Failed to send to command channel");
+        // unsafe { command.handle() };
     }
 }

@@ -3,7 +3,8 @@ use serde::{Serialize, Deserialize};
 /// Commands are sent through the pipe to control the overlay
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum Command {
-    UpdateFrame(Frame)
+    UpdateFrame(Frame),
+    ClearScreen
 }
 
 /// A frame state of the overlay

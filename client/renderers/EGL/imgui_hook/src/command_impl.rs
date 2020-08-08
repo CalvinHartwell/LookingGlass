@@ -1,18 +1,6 @@
 use crate::commands::{Frame, DrawCommand, Command};
 use crate::bindings::*;
 
-impl Command {
-    pub unsafe fn handle(&self) {
-        match self {
-            Command::UpdateFrame(frame) => {
-                let mut current_frame = crate::CURRENT_FRAME.lock().unwrap();
-                // there may be a way to not use clone here (TODO)
-                *current_frame = frame.clone();
-            }
-        }
-    }
-}
-
 impl Frame {
     pub unsafe fn draw(&self, draw_list: *mut ImDrawList) {
         for command in &self.commands {
