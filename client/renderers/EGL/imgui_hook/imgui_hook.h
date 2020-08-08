@@ -6,6 +6,6 @@
 #include <stdlib.h>
 #include "cimgui.h"
 
+void start_pipe_thread();
 void init_imgui(SDL_Window*);
-
 ImDrawData* render_callback(SDL_Window*);

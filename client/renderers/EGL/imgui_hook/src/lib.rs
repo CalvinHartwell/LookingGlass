@@ -1,12 +1,24 @@
 #[allow(warnings)]
 mod bindings;
+mod commands;
+mod command_impl;
+mod pipe;
 
-use std::os::raw::c_void;
 use std::ffi::{CString, CStr};
 use std::ptr::{null, null_mut};
+use std::sync::Mutex;
 use bindings::*;
+use simplelog::{TermLogger, Config, TerminalMode};
+use log::*;
 
 // include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
+const PIPE_LOCATION: &str = "/tmp/overlay-pipe";
+
+#[no_mangle]
+pub extern "C" fn start_pipe_thread() {
+    TermLogger::init(LevelFilter::Debug, Config::default(), TerminalMode::Mixed);
+    std::thread::spawn(pipe::pipe_thread);
+}
 
 #[no_mangle]
 pub extern "C" fn init_imgui(window: *mut SDL_Window) {
@@ -16,6 +28,10 @@ pub extern "C" fn init_imgui(window: *mut SDL_Window) {
         ImGui_ImplSDL2_InitForOpenGL(window, context);
         igStyleColorsDark(null_mut());
     }
+}
+
+lazy_static::lazy_static! {
+    pub static ref CURRENT_FRAME: Mutex<commands::Frame> = Mutex::new(commands::Frame::new());
 }
 
 #[no_mangle]
@@ -37,15 +53,20 @@ pub extern "C" fn render_callback(window: *mut SDL_Window) -> *mut ImDrawData {
                         | ImGuiWindowFlags__ImGuiWindowFlags_NoInputs
                         | ImGuiWindowFlags__ImGuiWindowFlags_NoBackground) as _) {
             let draw_list = igGetWindowDrawList();
-            ImDrawList_AddRect(
-                draw_list,
-                ImVec2{x: 10.0, y: 10.0},
-                ImVec2{x: 500.0, y: 500.0},
-                0xFFFFFFFF,
-                0.0,
-                0,
-                5.0
-            );
+
+            // Draw the current frame updated by the pipe
+            // Maybe use channels instead and keep a local frame?
+            CURRENT_FRAME.lock().unwrap().draw(draw_list);
+
+            // ImDrawList_AddRect(
+            //     draw_list,
+            //     ImVec2{x: 10.0, y: 10.0},
+            //     ImVec2{x: 500.0, y: 500.0},
+            //     0xFFFFFFFF,
+            //     0.0,
+            //     0,
+            //     5.0
+            // );
 
             igEnd();
         }

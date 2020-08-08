@@ -71,10 +71,8 @@ bool egl_overlay_init(EGL_Overlay **imgui, SDL_Window *w) {
     }
     memset(*imgui, 0, sizeof(EGL_Overlay));
 
-    if (!pipe_init(&(*imgui)->pipe)) {
-        DEBUG_ERROR("Failed to initialize pipe");
-        return false;
-    }
+    start_pipe_thread();
+
     if (!csgo_ovr_init(&(*imgui)->csgo)) {
         DEBUG_ERROR("Failed to initialize csgo");
         return false;
