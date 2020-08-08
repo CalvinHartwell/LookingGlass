@@ -20,7 +20,7 @@ impl DrawCommand {
                     data.color,
                     data.width
                 )
-            }
+            },
             _ => unimplemented!()
         }
     }
