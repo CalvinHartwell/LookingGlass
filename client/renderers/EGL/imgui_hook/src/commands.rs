@@ -45,6 +45,7 @@ pub struct BoxData {
     pub x2: f32,
     pub y2: f32,
     pub color: u32,
+    pub rounding: f32,
     pub width: f32,
     pub filled: bool,
 }
@@ -57,20 +58,31 @@ pub enum TextStyle {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+pub enum Font {
+    Default,
+    Pixel,
+    Tahoma,
+    Verdana
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct TextData {
-    pub x1: f32,
-    pub y1: f32,
+    pub x: f32,
+    pub y: f32,
     pub text: String,
     pub color: u32,
+    pub font: Font,
+    pub font_size: f32, // 0.0 for default font size
     pub centered: bool,
     pub style: TextStyle,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CircleData {
-    pub x1: f32,
-    pub y1: f32,
+    pub x: f32,
+    pub y: f32,
     pub radius: f32,
     pub color: u32,
     pub filled: bool,
+    pub width: f32
 }

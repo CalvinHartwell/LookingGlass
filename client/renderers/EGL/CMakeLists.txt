@@ -92,7 +92,7 @@ ExternalProject_Add(
 		imgui_hook
 		DOWNLOAD_COMMAND ""
 		CONFIGURE_COMMAND ""
-		BUILD_COMMAND cargo build COMMAND sh update_header.sh
+		BUILD_COMMAND cargo build COMMAND cargo build --release
 		BINARY_DIR "${CMAKE_CURRENT_SOURCE_DIR}/imgui_hook"
 		INSTALL_COMMAND ""
 		LOG_BUILD ON

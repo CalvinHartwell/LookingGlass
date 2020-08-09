@@ -2,6 +2,7 @@
 mod bindings;
 mod commands;
 mod command_impl;
+mod fonts;
 mod pipe;
 
 use std::ffi::{CString, CStr};
@@ -23,40 +24,12 @@ pub extern "C" fn start_pipe_thread() {
     std::thread::spawn(pipe::pipe_thread);
 }
 
-unsafe fn init_font(atlas: *mut ImFontAtlas, name: &str, bytes: &[u8], pixel_height: usize) {
-    let mut config: ImFontConfig = std::mem::zeroed();
-    // let mut name_buf: [i8; 40] = [0; 40];
-    // for (index, &c) in name.as_bytes().iter().enumerate() {
-    //     name_buf[index] = c as _;
-    // }
-    //
-    // config.Name = name_buf;
-    // config.FontNo = 1;
-    // config.FontData = bytes.as_ptr() as _;
-    //
-    ImFontAtlas_AddFontFromMemoryTTF(
-        atlas,
-        bytes.as_ptr() as _,
-        1,
-        pixel_height as _,
-        null(),
-        null()
-    );
-}
-
-unsafe fn init_imgui_fonts(atlas: *mut ImFontAtlas) {
-    ImFontAtlas_AddFontDefault(atlas, null());
-    init_font(atlas, "Pixel font", include_bytes!("fonts/smallest_pixel-7.ttf"), 10);
-    init_font(atlas, "Verdana", include_bytes!("fonts/Verdana.ttf"), 13);
-    init_font(atlas, "Tahoma", include_bytes!("fonts/Tahoma.ttf"), 14);
-}
-
 #[no_mangle]
 pub extern "C" fn init_imgui(window: *mut SDL_Window) {
     unsafe {
         let sdl_context = bindings::SDL_GL_CreateContext(window);
         let ctx = igCreateContext(null_mut());
-        init_imgui_fonts((*igGetIO()).Fonts);
+        fonts::init_imgui_fonts((*igGetIO()).Fonts);
         // init fonts
         ImGui_ImplSDL2_InitForOpenGL(window, sdl_context);
         igStyleColorsDark(null_mut());
@@ -78,15 +51,16 @@ pub extern "C" fn render_callback(window: *mut SDL_Window) -> *mut ImDrawData {
 
         // igSetMouseCursor(ImGuiMouseCursor__ImGuiMouseCursor_None);
         let overlay_title = CString::new("Overlay").unwrap();
-        igSetNextWindowPos(ImVec2{x: 0.0, y: 0.0}, 0, ImVec2{x: 0.0, y: 0.0});
+        igSetNextWindowPos(ImVec2 { x: 0.0, y: 0.0 }, 0, ImVec2 { x: 0.0, y: 0.0 });
         igSetNextWindowSize((*igGetIO()).DisplaySize, 0);
+        igSetMouseCursor(ImGuiMouseCursor__ImGuiMouseCursor_None);
         if igBegin(overlay_title.as_ptr(), null_mut(), (ImGuiWindowFlags__ImGuiWindowFlags_NoTitleBar
-                        | ImGuiWindowFlags__ImGuiWindowFlags_NoResize
-                        | ImGuiWindowFlags__ImGuiWindowFlags_NoMove
-                        | ImGuiWindowFlags__ImGuiWindowFlags_NoScrollbar
-                        | ImGuiWindowFlags__ImGuiWindowFlags_NoSavedSettings
-                        | ImGuiWindowFlags__ImGuiWindowFlags_NoInputs
-                        | ImGuiWindowFlags__ImGuiWindowFlags_NoBackground) as _) {
+            | ImGuiWindowFlags__ImGuiWindowFlags_NoResize
+            | ImGuiWindowFlags__ImGuiWindowFlags_NoMove
+            | ImGuiWindowFlags__ImGuiWindowFlags_NoScrollbar
+            | ImGuiWindowFlags__ImGuiWindowFlags_NoSavedSettings
+            | ImGuiWindowFlags__ImGuiWindowFlags_NoInputs
+            | ImGuiWindowFlags__ImGuiWindowFlags_NoBackground) as _) {
             let draw_list = igGetWindowDrawList();
 
             // Get a command from the pipe channel if there is one in the buffer
@@ -94,7 +68,7 @@ pub extern "C" fn render_callback(window: *mut SDL_Window) -> *mut ImDrawData {
                 match command {
                     Command::UpdateFrame(frame) => {
                         (*CURRENT_FRAME.lock().unwrap()) = frame;
-                    },
+                    }
                     Command::ClearScreen => {
                         (*CURRENT_FRAME.lock().unwrap()) = Frame::new();
                     }
@@ -103,9 +77,9 @@ pub extern "C" fn render_callback(window: *mut SDL_Window) -> *mut ImDrawData {
 
             // Draw the frame
             CURRENT_FRAME.lock().unwrap().draw(draw_list);
-            let title = CString::new("hello").unwrap();
-            igShowFontSelector(title.as_ptr());
-            igShowDemoWindow(null_mut());
+            // let title = CString::new("hello").unwrap();
+            // igShowFontSelector(title.as_ptr());
+            // igShowDemoWindow(null_mut());
 
             igEnd();
         }

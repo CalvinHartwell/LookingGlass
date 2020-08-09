@@ -29,11 +29,12 @@ pub fn pipe_thread() {
 
 
     loop {
+        std::thread::sleep(std::time::Duration::from_micros(1));
         let mut buf = [0u8; 500000];
 
         let len = match pipe.read(&mut buf) {
             Err(err) => {
-                error!("Error reading from pipe: {}", err);
+                // error!("Error reading from pipe: {}", err);
                 continue;
             }
             Ok(len) => len
@@ -45,7 +46,6 @@ pub fn pipe_thread() {
         }
 
         debug!("Read {} bytes", len);
-        dbg!(&buf[0..len]);
 
         let command: Command = match bincode::deserialize(&buf[0..len]) {
             Err(err) => {
