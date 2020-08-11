@@ -82,3 +82,29 @@ target_include_directories(renderer_EGL
 		${EGL_SHADER_INCS}
 		${RENDERER_EGL_PKGCONFIG_INCLUDE_DIRS}
 )
+
+include(ExternalProject)
+
+
+set_directory_properties(PROPERTIES EP_PREFIX ${CMAKE_CURRENT_SOURCE_DIR}/imgui_hook)
+
+ExternalProject_Add(
+		imgui_hook
+		DOWNLOAD_COMMAND ""
+		CONFIGURE_COMMAND ""
+		BUILD_COMMAND cargo build COMMAND cargo build --release
+		BINARY_DIR "${CMAKE_CURRENT_SOURCE_DIR}/imgui_hook"
+		INSTALL_COMMAND ""
+		LOG_BUILD ON
+		BUILD_ALWAYS TRUE
+)
+
+
+add_dependencies(renderer_EGL imgui_hook)
+
+# Specify Example's link libraries
+target_link_libraries(renderer_EGL
+		debug "${CMAKE_CURRENT_SOURCE_DIR}/imgui_hook/target/debug/libimgui_hook.so"
+		optimized "${CMAKE_CURRENT_SOURCE_DIR}/imgui_hook/target/release/libimgui_hook.so"
+		)
+#target_link_libraries(renderer_EGL ${CMAKE_CURRENT_BINARY_DIR}/imgui_hook/target/debug/libimgui_hook.so)

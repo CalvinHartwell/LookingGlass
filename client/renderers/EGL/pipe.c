@@ -56,6 +56,7 @@ void pipe_free(LG_Pipe ** pipe)
 
 void pipe_send(LG_Pipe * pipe, void * data, size_t size)
 {
+    return;
   DEBUG_INFO("Sending %ld bytes", size);
   write(pipe->fd, data, size);
 }
